@@ -1,44 +1,70 @@
-import { Navbar, Container, Nav, Button } from 'react-bootstrap';
+import { Navbar, Container, Nav, Button, Badge } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuthContext } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
-export default function Header({ limpiarCarrito }) {
+import { 
+  FaHome, 
+  FaBoxOpen, 
+  FaUserCog, 
+  FaShoppingCart, 
+  FaSignInAlt, 
+  FaSignOutAlt, 
+  FaStore
+} from 'react-icons/fa'; 
+
+export default function Header() { 
   const navigate = useNavigate();
-
-  const isAuth = localStorage.getItem('auth') === 'true';
+  const { user, logout } = useAuthContext(); 
+  const { cartCount, clearCart } = useCart();
 
   const cerrarSesion = () => {
-    localStorage.removeItem('auth');
-    localStorage.removeItem('carrito');
-    limpiarCarrito();
+    logout();
+    clearCart(); 
     navigate('/login');
   };
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg">
+    <Navbar bg="dark" variant="dark" expand="lg" className="mb-4">
       <Container>
-        <Navbar.Brand as={Link} to="/">Tiendita Online</Navbar.Brand>
-        <Navbar.Toggle />
-        <Navbar.Collapse>
+        <Navbar.Brand as={Link} to="/">
+          <FaStore className="me-2" />
+          Tiendita Online
+        </Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link as={Link} to="/" >Inicio</Nav.Link>
-            <Nav.Link as={Link} to="/productos">Productos</Nav.Link>
-            {/* Enlaces que solo se muestran si el usuario está autenticado */}
-            {isAuth && (
+            <Nav.Link as={Link} to="/" end>
+              <FaHome className="me-2" />Inicio
+            </Nav.Link>
+            <Nav.Link as={Link} to="/productos">
+              <FaBoxOpen className="me-2" />Productos
+            </Nav.Link>
+            {user && ( 
               <>
-                <Nav.Link as={Link} to="/perfil/1">Perfil</Nav.Link>
-                <Nav.Link as={Link} to="/admin">Admin</Nav.Link>
+                {user.role === 'admin' && ( 
+                  <Nav.Link as={Link} to="/admin">
+                    <FaUserCog className="me-2" />Admin
+                  </Nav.Link>
+                )}
               </>
             )}
           </Nav>
           <Nav>
-            <Nav.Link as={Link} to="/carrito"><i className="fas fa-shopping-cart"></i></Nav.Link>
+            <Nav.Link as={Link} to="/carrito">
+              <FaShoppingCart className="me-1" />{' '}
+              Carrito <Badge bg="secondary" className="ms-1">{cartCount}</Badge>
+            </Nav.Link>
           </Nav>
           <Nav>
-            {/* Mostrar botón de login o logout según autenticación */}
-            {!isAuth ? (
-              <Nav.Link as={Link} to="/login">Login</Nav.Link>
-            ) : (
-              <Button variant="outline-light" size="sm" onClick={cerrarSesion}>Cerrar sesión</Button>
+            {!user ? (
+              <Nav.Link as={Link} to="/login">
+                <FaSignInAlt className="me-2" />Iniciar sesión
+              </Nav.Link>
+            ) : ( 
+              <Button variant="outline-light" size="sm" onClick={cerrarSesion}>
+                <FaSignOutAlt className="me-2" />Cerrar sesión
+              </Button>
             )}
           </Nav>
         </Navbar.Collapse>

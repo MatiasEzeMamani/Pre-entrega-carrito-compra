@@ -1,50 +1,81 @@
-import { useEffect, useState } from "react"
-import { Row, Col } from "react-bootstrap";
-import ProductCard from "./ProductCard";
+import { useEffect, useState } from 'react';
+import { Container, Row, Col, Spinner, Alert, Pagination } from 'react-bootstrap'; 
+import ProductCard from './ProductCard'; 
 
-const ProductList = ({ category = null, limit = null, agregarAlCarrito, className }) => {
-    const [products, setProducts] = useState([]);
+const PRODUCTS_API_URL = "https://687aa82dabb83744b7ed8e11.mockapi.io/api/products";
+
+export default function ProductList() { 
+    const [allProducts, setAllProducts] = useState([]); 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const [productsPerPage] = useState(8); 
     useEffect(() => {
-        let url = "https://fakestoreapi.com/products";
-        if (category) {
-            url = `https://fakestoreapi.com/products/category/${category}`;
-        }
-
-        fetch(url)
-            .then((response) => response.json())
-            .then((data) => {
-                setProducts(data);
+        const fetchProducts = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const response = await fetch(PRODUCTS_API_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setAllProducts(data); 
+            } catch (err) {
+                console.error("Error fetching products:", err);
+                setError("No se pudieron cargar los productos. Por favor, inténtalo de nuevo más tarde.");
+            } finally {
                 setLoading(false);
-            })
-            .catch((error) => {
-                setError("Error al cargar los productos.");
-                setLoading(false);
-            })
-    }, [category]);
+            }
+        };
+        fetchProducts();
+    }, []);
 
-    if (loading) {
-        return <div>Cargando...</div>
-    }
+    const indexOfLastProduct = currentPage * productsPerPage;
+    const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+    const currentProducts = allProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
-    if (error) return <div className="alert alert-danger">{error}</div>;
+    const totalPages = Math.ceil(allProducts.length / productsPerPage);
 
-    const productsToShow = limit ? products.slice(0, limit) : products;
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     return (
-        <Row className={className}>
-            {productsToShow.map((product) => (
-                <Col md={4} key={product.id} className="mb-4">
-                    <ProductCard
-                        product={product}
-                        agregarAlCarrito={agregarAlCarrito}
-                    />
-                </Col>
-            ))}
-        </Row>
-    )
-}
+        <Container className="mt-5 mb-5">
+            <h2 className="text-center mb-4">Nuestros Productos</h2>
+            {loading && <div className="text-center"><Spinner animation="border" /><p>Cargando productos...</p></div>}
+            {error && <Alert variant="danger" className="text-center">{error}</Alert>}
+            {!loading && !error && allProducts.length === 0 && (
+                <Alert variant="info" className="text-center">No hay productos disponibles en este momento.</Alert>
+            )}
+            
+            <Row xs={1} md={2} lg={3} xl={4} className="g-4">
+                {!loading && !error && currentProducts.map((product) => ( 
+                    <Col key={product.id} className="d-flex">
+                        <ProductCard product={product} />
+                    </Col>
+                ))}
+            </Row>
 
-export default ProductList;
+            {!loading && !error && allProducts.length > productsPerPage && ( 
+                <div className="d-flex justify-content-center mt-4">
+                    <Pagination>
+                        <Pagination.First onClick={() => paginate(1)} disabled={currentPage === 1} />
+                        <Pagination.Prev onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} />
+                        {[...Array(totalPages)].map((_, index) => (
+                            <Pagination.Item 
+                                key={index + 1} 
+                                active={index + 1 === currentPage} 
+                                onClick={() => paginate(index + 1)}
+                            >
+                                {index + 1}
+                            </Pagination.Item>
+                        ))}
+                        <Pagination.Next onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} />
+                        <Pagination.Last onClick={() => paginate(totalPages)} disabled={currentPage === totalPages} />
+                    </Pagination>
+                </div>
+            )}
+        </Container>
+    );
+}
