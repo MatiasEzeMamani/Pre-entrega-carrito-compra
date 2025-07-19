@@ -31,6 +31,14 @@
 
 ---
 
+## 📸 Demo
+
+🎯 Podés ver la versión desplegada de la aplicación aquí:  
+👉 [https://jade-muffin-fdd80d.netlify.app](https://jade-muffin-fdd80d.netlify.app)
+
+> Deploy realizado en [Netlify](https://www.netlify.com/)
+
+---
 # 🚀 Instalación y Uso
 
 ## ✅ Requisitos Previos
